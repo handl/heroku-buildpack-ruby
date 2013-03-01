@@ -119,8 +119,20 @@ class LanguagePack::Ruby < LanguagePack::Base
         create_database_yml
         install_binaries
         run_assets_precompile_rake_task
+        create_deployed_server_versions_json
       end
       super
+    end
+  end
+
+  def create_deployed_server_versions_json
+    log("Create_deployed_server_versions_json") do
+      deployed_server_versions_json = `env PATH=$PATH:bin bundle exec rake handl:get_deployed_server_versions_json`
+      deployed_server_versions_json.match(/^{/) || raise("Invalid JSON: #{deployed_server_versions_json}") # This will raise an exception if we don't get valid JSON back from the rake task
+      topic("Writing config/deployed_server_versions.json")
+      File.open("config/deployed_server_versions.json", "w") do |file|
+        file.puts deployed_server_versions_json
+      end
     end
   end
 
